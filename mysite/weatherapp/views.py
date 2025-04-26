@@ -3,6 +3,7 @@ import json
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import JsonResponse
 from .models import FavoriteCity
 
 def index(request):
@@ -21,10 +22,19 @@ def index(request):
         city = request.POST['city']
         data['search_term'] = city
         
+        # Check if we have coordinates from autocomplete
+        lat = request.POST.get('lat')
+        lon = request.POST.get('lon')
+        
         try:
             # TODO: Replace '<API-KEY-GOES-HERE>' with your actual OpenWeatherMap API key
-            # Sign up at https://openweathermap.org/api to get your API key
-            url = f'http://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid=6fcd6f7736ef7bf7c234dcb03a3e1df5'
+            if lat and lon:
+                # Use coordinates for more accurate results if provided
+                url = f'http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid=6fcd6f7736ef7bf7c234dcb03a3e1df5'
+            else:
+                # Fall back to city name search
+                url = f'http://api.openweathermap.org/data/2.5/weather?q={city}&units=metric&appid=6fcd6f7736ef7bf7c234dcb03a3e1df5'
+                
             source = urllib.request.urlopen(url).read()
             list_of_data = json.loads(source)
             
@@ -35,7 +45,7 @@ def index(request):
             
             # Process weather data
             data.update({
-                "city_name": city,
+                "city_name": city if city else list_of_data.get('name', 'Unknown'),
                 "country_code": str(list_of_data['sys']['country']),
                 "coordinate": str(list_of_data['coord']['lon']) + ', '
                 + str(list_of_data['coord']['lat']),
@@ -101,3 +111,33 @@ def get_favorite_weather(request, city_id):
     except FavoriteCity.DoesNotExist:
         messages.error(request, "City not found in favorites.")
         return redirect('index')
+
+def location_suggestions(request):
+    """API endpoint to get location suggestions as user types"""
+    query = request.GET.get('q', '')
+    
+    if len(query) < 3:
+        return JsonResponse([], safe=False)
+    
+    try:
+        # Use OpenWeatherMap Geocoding API to get suggestions
+        # TODO: Replace '<API-KEY-GOES-HERE>' with your actual OpenWeatherMap API key
+        url = f'http://api.openweathermap.org/geo/1.0/direct?q={query}&limit=5&appid=<API-KEY-GOES-HERE>'
+        source = urllib.request.urlopen(url).read()
+        locations = json.loads(source)
+        
+        # Format the response
+        formatted_locations = []
+        for loc in locations:
+            formatted_locations.append({
+                'name': loc.get('name', ''),
+                'state': loc.get('state', ''),
+                'country': loc.get('country', ''),
+                'lat': loc.get('lat', 0),
+                'lon': loc.get('lon', 0)
+            })
+        
+        return JsonResponse(formatted_locations, safe=False)
+    except Exception as e:
+        print(f"Error fetching location suggestions: {str(e)}")
+        return JsonResponse([], safe=False)
