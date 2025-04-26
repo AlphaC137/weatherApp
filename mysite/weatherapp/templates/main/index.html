@@ -11,64 +11,220 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
     <title>Weather App</title>
     <style>
+        :root {
+            --primary-color: #f6fa0c;
+            --secondary-color: #15df58;
+            --accent-color: #f39c12;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --card-bg: #ffffff;
+            --card-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), #34495e) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary, .bg-primary {
+            background-color: var(--secondary-color) !important;
+            border-color: var(--secondary-color) !important;
+        }
+        
+        .btn-secondary {
+            background-color: var(--accent-color) !important;
+            border-color: var(--accent-color) !important;
+        }
+        
+        .btn-outline-light:hover {
+            color: var(--primary-color) !important;
+        }
+        
+        .jumbotron {
+            background: linear-gradient(135deg, #ffffff 0%, #232529 100%);
+            color: white;
+            margin-top: -30px;
+            padding: 4rem 2rem;
+            border-radius: 0 0 15px 15px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            border-bottom: none;
+            padding: 1.25rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
         .loading {
             display: none;
             text-align: center;
             padding: 20px;
         }
+        
         .spinner-border {
             width: 3rem;
             height: 3rem;
+            color: var(--secondary-color);
         }
+        
         .weather-icon {
-            width: 70px;
+            width: 80px;
             height: auto;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.1));
         }
+        
         .card-header h4 {
             margin-bottom: 0;
         }
+        
         .temp-display {
-            font-size: 2.5rem;
+            font-size: 3rem;
             font-weight: 300;
+            background: -webkit-linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
+        
         .weather-detail {
-            margin-bottom: 0.75rem;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            border-radius: 10px;
+            background-color: rgba(236, 240, 241, 0.3);
+            transition: all 0.3s ease;
         }
-        .weather-section {
-            margin-top: 1rem;
-            border-top: 1px solid #eee;
-            padding-top: 1rem;
+        
+        .weather-detail:hover {
+            background-color: rgba(236, 240, 241, 0.5);
+            transform: translateX(5px);
         }
+        
+        .weather-detail i {
+            color: var(--secondary-color);
+            margin-right: 8px;
+        }
+        
+        .navbar-dark .navbar-brand {
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        
+        footer {
+            background: linear-gradient(135deg, var(--primary-color), #34495e) !important;
+            padding: 2rem 0;
+        }
+        
+        .input-group {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .form-control {
+            border: none;
+            padding: 1.2rem 1.5rem;
+            font-size: 1rem;
+        }
+        
+        .input-group-append .btn {
+            padding: 0.75rem 1.5rem;
+        }
+        
         /* Autocomplete styles */
         .autocomplete-container {
             position: relative;
         }
+        
         .autocomplete-results {
             position: absolute;
             z-index: 1000;
             width: 100%;
-            max-height: 200px;
+            max-height: 300px;
             overflow-y: auto;
             background-color: white;
-            border: 1px solid #ddd;
-            border-top: none;
-            border-radius: 0 0 4px 4px;
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             display: none;
         }
+        
         .autocomplete-item {
-            padding: 10px 15px;
+            padding: 15px 20px;
             cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid rgba(236, 240, 241, 0.5);
+            transition: all 0.2s ease;
         }
+        
         .autocomplete-item:hover {
-            background-color: #f5f5f5;
+            background-color: #f8f9fa;
+            padding-left: 25px;
         }
+        
         .autocomplete-item .location-name {
             font-weight: bold;
+            color: var(--primary-color);
         }
+        
         .autocomplete-item .location-country {
-            font-size: 0.8em;
-            color: #666;
+            font-size: 0.85em;
+            color: #7f8c8d;
+            margin-top: 3px;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .list-group-item {
+            border-left: none;
+            border-right: none;
+            padding: 1rem 1.25rem;
+            transition: all 0.2s ease;
+        }
+        
+        .list-group-item:hover {
+            background-color: rgba(236, 240, 241, 0.3);
+        }
+        
+        .list-group-item .btn-sm {
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .jumbotron {
+                padding: 2rem 1rem;
+            }
+            
+            .temp-display {
+                font-size: 2.5rem;
+            }
         }
     </style>
 </head>
