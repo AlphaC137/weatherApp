@@ -8,57 +8,188 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/4.5.3/cerulean/bootstrap.min.css"
         integrity="sha512-dQLT/B7byn2LjN/DN4zeBKpwGV6qbidV0XiMRWQOL7TGrV7FkZFldkGG+DGMU+CQnMTcRZlUI7GMWt1j6akNew=="
         crossorigin="anonymous" />
-    <title>Document</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <title>Weather App</title>
+    <style>
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+        .weather-icon {
+            width: 70px;
+            height: auto;
+        }
+        .card-header h4 {
+            margin-bottom: 0;
+        }
+        .temp-display {
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+        .weather-detail {
+            margin-bottom: 0.75rem;
+        }
+        .weather-section {
+            margin-top: 1rem;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Hello world</h1>
     <div class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark">
         <div class="container">
-            <a href="../" class="navbar-brand">Weather App <span style="color: rgb(39, 117, 161);"> <strong> - Django
+            <a href="{% url 'index' %}" class="navbar-brand">Weather App <span style="color: rgb(39, 117, 161);"> <strong> - Django
                         Framework</strong>
                 </span> </a>
             <a href="https://openweathermap.org" class="navbar-tech">OpenWeather - Get Your API</a>
+            <div class="ml-auto">
+                {% if user.is_authenticated %}
+                    <span class="text-light mr-3">Welcome, {{ user.username }}</span>
+                    <a href="{% url 'admin:logout' %}" class="btn btn-sm btn-outline-light">Logout</a>
+                {% else %}
+                    <a href="{% url 'admin:login' %}" class="btn btn-sm btn-outline-light">Login</a>
+                {% endif %}
+            </div>
         </div>
     </div>
 
     <br /><br /> <br>
     <div id="jumbotron" class="jumbotron" style="text-align: center; margin-top:-50px">
         <h1 class="display-5">Weather Desktop App </h1>
-        <h5>Using Python Language and Django Framework</h5>
-
-        <!-- <img src="{% static 'images/weather.png' %}" class="image" style="width:100px; margin-bottom:-50px; "> -->
+        <h5>This a Power Learn Project assignment for python week 8 about Using Python Language and Django Framework made by yours truly</h5>
     </div>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <form method="post" class="col-md"">
-          {% csrf_token %}
-          <div class=" input-group">
+    {% if messages %}
+    <div class="container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
-            <input type="text" class="form-control" name="city" placeholder="Choose Your City ...">
-            <div class="input-group-btn">
-                <button type="submit" class="btn btn-primary">Search</button>
+    <div class="container">
+        <div class="row">
+            <!-- Favorites section (shown only for logged in users) -->
+            {% if user.is_authenticated and favorite_cities %}
+            <div class="col-md-3 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Your Favorite Cities</h5>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for city in favorite_cities %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <a href="{% url 'get_favorite_weather' city.id %}" class="text-primary">
+                                {{ city.name }}
+                            </a>
+                            <a href="{% url 'remove_favorite' city.id %}" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
-            </div>
-            <form>
-    </nav>
-    <br> <br>
-    <div class="row">
-        {% if country_code and coordinate and temp and pressure and humidity %}
-        <div class="col d-flex justify-content-center" ">
-          <div class=" card text-white bg-light mb-6">
-            <div class=" card-body">
-                <h4><span class="badge badge-primary">Country Code :</span> {{country_code}}</h4>
-                <h4><span class="badge badge-primary">Coordinates [X,Y] :</span> {{coordinate}}</h4>
-                <h4><span class="badge badge-primary">Temperature in Celsius :</span> {{temp}}</h4>
-                <h4><span class="badge badge-primary">Pressure :</span> {{pressure}} </h4>
-                <h4><span class="badge badge-primary">Humidity : </span> {{humidity}}</h4>
-                <h4><span class="badge badge-primary">Forecast : </span> {{main}} <img
-                        src="http://openweathermap.org/img/w/{{icon}}.png" alt="Image" style="width:70px"></h4>
-                <h4><span class="badge badge-primary">Description : </span> {{description}}</h4>
-            </div>
+            <div class="col-md-9">
+            {% else %}
+            <div class="col-md-12">
             {% endif %}
+                <!-- Search form -->
+                <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+                    <form method="post" class="col-md" id="weather-form">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="city" placeholder="Choose Your City ..."
+                                   value="{{ search_term }}" required>
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-secondary">Search</button>
+                            </div>
+                        </div>
+                    </form>
+                </nav>
+
+                <!-- Loading indicator -->
+                <div class="loading" id="loading-indicator">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <p class="mt-2">Fetching weather data...</p>
+                </div>
+
+                <!-- Weather data display -->
+                {% if city_name and country_code %}
+                <div class="card mb-4">
+                    <div class="card-header bg-primary d-flex justify-content-between align-items-center">
+                        <h4 class="text-white mb-0">{{ city_name }}, {{ country_code }}</h4>
+                        {% if user.is_authenticated %}
+                        <form method="post" action="{% url 'add_favorite' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="city_name" value="{{ city_name }}">
+                            <button type="submit" class="btn btn-light">
+                                <i class="fas fa-heart"></i> Add to Favorites
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="temp-display">{{ temp }}</div>
+                                    <img src="http://openweathermap.org/img/w/{{icon}}.png" alt="Weather Icon" class="weather-icon ml-3">
+                                </div>
+                                <h5>{{ main }} - {{ description }}</h5>
+                                <p class="text-muted">Coordinates: {{ coordinate }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="weather-detail">
+                                    <strong><i class="fas fa-tint"></i> Humidity:</strong> {{ humidity }}
+                                </div>
+                                <div class="weather-detail">
+                                    <strong><i class="fas fa-compress-alt"></i> Pressure:</strong> {{ pressure }}
+                                </div>
+                                {% if wind_speed %}
+                                <div class="weather-detail">
+                                    <strong><i class="fas fa-wind"></i> Wind:</strong> {{ wind_speed }} at {{ wind_direction }}
+                                </div>
+                                {% endif %}
+                                {% if visibility %}
+                                <div class="weather-detail">
+                                    <strong><i class="fas fa-eye"></i> Visibility:</strong> {{ visibility }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
         </div>
+    </div>
+
+    <footer class="bg-dark text-white mt-5 py-3">
+        <div class="container text-center">
+            <p>Sydwell Lebeloane &copy; 2025</p>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Show loading indicator when form is submitted
+        document.getElementById('weather-form').addEventListener('submit', function() {
+            document.getElementById('loading-indicator').style.display = 'block';
+        });
+    </script>
 </body>
 
 </html>
