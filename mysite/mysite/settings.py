@@ -28,6 +28,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# OpenWeatherMap API Key (get from environment or use default for development)
+OPENWEATHER_API_KEY = os.environ.get('OPENWEATHER_API_KEY', '6fcd6f7736ef7bf7c234dcb03a3e1df5')
+
 
 # Application definition
 

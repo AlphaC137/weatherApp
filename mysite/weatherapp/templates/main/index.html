@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 {% load static %}
 
 <head>
@@ -9,6 +9,10 @@
         integrity="sha512-dQLT/B7byn2LjN/DN4zeBKpwGV6qbidV0XiMRWQOL7TGrV7FkZFldkGG+DGMU+CQnMTcRZlUI7GMWt1j6akNew=="
         crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <!-- Leaflet CSS for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+        integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+        crossorigin="anonymous" />
     <title>Weather App</title>
     <style>
         :root {
@@ -21,11 +25,27 @@
             --danger-color: #e74c3c;
             --card-bg: #ffffff;
             --card-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            --text-color: #333333;
+            --body-bg: #f5f7fa;
+        }
+        
+        [data-theme="dark"] {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --accent-color: #e67e22;
+            --light-color: #34495e;
+            --dark-color: #ecf0f1;
+            --card-bg: #2c3e50;
+            --card-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            --text-color: #ecf0f1;
+            --body-bg: #1a1a2e;
         }
         
         body {
-            background-color: #f5f7fa;
+            background-color: var(--body-bg);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
+            transition: all 0.3s ease;
         }
         
         .navbar {
@@ -56,12 +76,21 @@
             box-shadow: var(--card-shadow);
         }
         
+        [data-theme="dark"] .jumbotron {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0F3460 100%);
+        }
+        
         .card {
             border: none;
             border-radius: 15px;
             box-shadow: var(--card-shadow);
             overflow: hidden;
             transition: transform 0.3s ease;
+            background-color: var(--card-bg);
+        }
+        
+        [data-theme="dark"] .card {
+            color: var(--light-color);
         }
         
         .card:hover {
@@ -104,6 +133,7 @@
             font-weight: 300;
             background: -webkit-linear-gradient(135deg, var(--secondary-color), var(--accent-color));
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         
@@ -115,9 +145,17 @@
             transition: all 0.3s ease;
         }
         
+        [data-theme="dark"] .weather-detail {
+            background-color: rgba(26, 26, 46, 0.3);
+        }
+        
         .weather-detail:hover {
             background-color: rgba(236, 240, 241, 0.5);
             transform: translateX(5px);
+        }
+        
+        [data-theme="dark"] .weather-detail:hover {
+            background-color: rgba(26, 26, 46, 0.5);
         }
         
         .weather-detail i {
@@ -145,6 +183,8 @@
             border: none;
             padding: 1.2rem 1.5rem;
             font-size: 1rem;
+            background-color: var(--card-bg);
+            color: var(--text-color);
         }
         
         .input-group-append .btn {
@@ -162,7 +202,7 @@
             width: 100%;
             max-height: 300px;
             overflow-y: auto;
-            background-color: white;
+            background-color: var(--card-bg);
             border-radius: 0 0 15px 15px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             display: none;
@@ -173,11 +213,16 @@
             cursor: pointer;
             border-bottom: 1px solid rgba(236, 240, 241, 0.5);
             transition: all 0.2s ease;
+            color: var(--text-color);
         }
         
         .autocomplete-item:hover {
-            background-color: #f8f9fa;
+            background-color: rgba(236, 240, 241, 0.2);
             padding-left: 25px;
+        }
+        
+        [data-theme="dark"] .autocomplete-item:hover {
+            background-color: rgba(52, 73, 94, 0.4);
         }
         
         .autocomplete-item .location-name {
@@ -187,7 +232,8 @@
         
         .autocomplete-item .location-country {
             font-size: 0.85em;
-            color: #7f8c8d;
+            color: var(--text-color);
+            opacity: 0.7;
             margin-top: 3px;
         }
         
@@ -201,10 +247,16 @@
             border-right: none;
             padding: 1rem 1.25rem;
             transition: all 0.2s ease;
+            background-color: var(--card-bg);
+            color: var(--text-color);
         }
         
         .list-group-item:hover {
             background-color: rgba(236, 240, 241, 0.3);
+        }
+        
+        [data-theme="dark"] .list-group-item:hover {
+            background-color: rgba(26, 26, 46, 0.3);
         }
         
         .list-group-item .btn-sm {
@@ -217,26 +269,262 @@
             padding: 0;
         }
         
+        /* Dark mode toggle */
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        
+        .theme-switch {
+            display: inline-block;
+            height: 24px;
+            position: relative;
+            width: 48px;
+        }
+        
+        .theme-switch input {
+            display: none;
+        }
+        
+        .slider {
+            background-color: #ccc;
+            bottom: 0;
+            cursor: pointer;
+            left: 0;
+            position: absolute;
+            right: 0;
+            top: 0;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            background-color: white;
+            bottom: 3px;
+            content: "";
+            height: 18px;
+            left: 4px;
+            position: absolute;
+            transition: .4s;
+            width: 18px;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--secondary-color);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+        
+        .slider-icon {
+            color: white;
+            font-size: 10px;
+            position: absolute;
+            top: 6px;
+        }
+        
+        .slider-icon.sun {
+            left: 8px;
+        }
+        
+        .slider-icon.moon {
+            right: 8px;
+        }
+        
         @media (max-width: 768px) {
             .jumbotron {
-                padding: 2rem 1rem;
+                padding: 1.5rem 1rem;
+                margin-top: -40px;
             }
             
             .temp-display {
                 font-size: 2.5rem;
             }
+            
+            .navbar-brand {
+                font-size: 1rem;
+            }
+            
+            .navbar-tech {
+                display: none;
+            }
+            
+            .theme-switch-wrapper {
+                margin-right: 10px;
+            }
+            
+            .card-body {
+                padding: 1rem;
+            }
+            
+            .list-group-item {
+                padding: 0.75rem 1rem;
+            }
+            
+            .weather-detail {
+                margin-bottom: 0.5rem;
+                padding: 0.5rem;
+            }
+            
+            .form-control {
+                padding: 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .input-group-append .btn {
+                padding: 0.5rem 1rem;
+            }
+            
+            /* Improve touch targets for mobile */
+            .btn {
+                min-height: 44px;
+                min-width: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            /* Make weather details more touch-friendly */
+            .weather-detail {
+                border-radius: 12px;
+                padding: 0.75rem;
+            }
+            
+            /* Improve map interaction on mobile */
+            #weather-map {
+                height: 200px;
+            }
+            
+            /* Better spacing for favorites */
+            .list-group-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            /* Floating action button style for search */
+            .mobile-search-fab {
+                display: none;
+            }
         }
+        
+        /* Small phones */
+        @media (max-width: 576px) {
+            .jumbotron h1 {
+                font-size: 1.5rem;
+            }
+            
+            .jumbotron h5 {
+                font-size: 0.9rem;
+            }
+            
+            .card-header {
+                padding: 0.75rem;
+            }
+            
+            .card-header h4 {
+                font-size: 1.2rem;
+            }
+            
+            .weather-icon {
+                width: 60px;
+            }
+            
+            /* Further improve touch areas */
+            .list-group-item .btn-sm {
+                width: 40px;
+                height: 40px;
+            }
+            
+            /* Stack weather display on small screens */
+            .weather-display-row {
+                flex-direction: column;
+            }
+            
+            .weather-display-row > div {
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+        }
+        
+        /* Map styles */
+        #weather-map {
+            height: 250px;
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        /* Leaflet popup customization */
+        .leaflet-popup-content-wrapper {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .leaflet-popup-tip {
+            background-color: var(--card-bg);
+        }
+
+        /* Unit Conversion Toggle */
+        .unit-toggle-wrapper {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .unit-toggle {
+            display: inline-flex;
+            background-color: var(--card-bg);
+            border-radius: 30px;
+            box-shadow: var(--card-shadow);
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .unit-toggle-btn {
+            background: none;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-weight: 500;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .unit-toggle-btn.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        /* Map styles */
     </style>
 </head>
 
 <body>
     <div class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark">
         <div class="container">
-            <a href="{% url 'index' %}" class="navbar-brand">Weather App <span style="color: rgb(39, 117, 161);"> <strong> - Django
+            <a href="{% url 'index' %}" class="navbar-brand">Weather App <span style="color: rgb(161, 39, 39);"> <strong> - Django
                         Framework</strong>
                 </span> </a>
             <a href="https://openweathermap.org" class="navbar-tech">OpenWeather - Get Your API</a>
-            <div class="ml-auto">
+            <div class="ml-auto d-flex align-items-center">
+                <div class="theme-switch-wrapper">
+                    <label class="theme-switch" for="checkbox">
+                        <input type="checkbox" id="checkbox" />
+                        <div class="slider round">
+                            <i class="fas fa-sun slider-icon sun"></i>
+                            <i class="fas fa-moon slider-icon moon"></i>
+                        </div>
+                    </label>
+                </div>
                 {% if user.is_authenticated %}
                     <span class="text-light mr-3">Welcome, {{ user.username }}</span>
                     <form method="post" action="{% url 'admin:logout' %}" class="d-inline">
@@ -344,6 +632,13 @@
                                     <div class="temp-display">{{ temp }}</div>
                                     <img src="http://openweathermap.org/img/w/{{icon}}.png" alt="Weather Icon" class="weather-icon ml-3">
                                 </div>
+                                <!-- Unit conversion toggle -->
+                                <div class="unit-toggle-wrapper">
+                                    <div class="unit-toggle">
+                                        <button type="button" class="unit-toggle-btn active" data-unit="metric">°C</button>
+                                        <button type="button" class="unit-toggle-btn" data-unit="imperial">°F</button>
+                                    </div>
+                                </div>
                                 <h5>{{ main }} - {{ description }}</h5>
                                 <p class="text-muted">Coordinates: {{ coordinate }}</p>
                             </div>
@@ -366,6 +661,10 @@
                                 {% endif %}
                             </div>
                         </div>
+                        <!-- Weather Map -->
+                        <div id="weather-map-container">
+                            <div id="weather-map" data-coordinates="{{ coordinate }}" data-city="{{ city_name }}" data-country="{{ country_code }}" data-temp="{{ temp }}" data-main="{{ main }}" data-icon="{{ icon }}"></div>
+                        </div>
                     </div>
                 </div>
                 {% endif %}
@@ -381,19 +680,103 @@
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Leaflet JS for maps -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+        integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+        crossorigin="anonymous"></script>
     <script>
-        // Show loading indicator when form is submitted
+        // Form submission loading indicator
         document.getElementById('weather-form').addEventListener('submit', function() {
             document.getElementById('loading-indicator').style.display = 'block';
         });
         
-        // Autocomplete functionality
+        // Dark mode toggle
+        const toggleSwitch = document.querySelector('#checkbox');
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        
+        // Init theme from localStorage
+        document.documentElement.setAttribute('data-theme', currentTheme);
+        toggleSwitch.checked = currentTheme === 'dark';
+        
+        toggleSwitch.addEventListener('change', function() {
+            if (this.checked) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+        
+        // Geolocation for default location
+        function getDefaultLocation() {
+            // Skip if weather card already exists
+            if (!document.querySelector('.card')) {
+                if (navigator.geolocation) {
+                    document.getElementById('loading-indicator').style.display = 'block';
+                    navigator.geolocation.getCurrentPosition(
+                        position => fetchWeatherByCoordinates(position.coords.latitude, position.coords.longitude),
+                        error => {
+                            console.error('Geolocation error:', error);
+                            document.getElementById('loading-indicator').style.display = 'none';
+                        },
+                        { timeout: 10000 }
+                    );
+                }
+            }
+        }
+        
+        async function fetchWeatherByCoordinates(lat, lon) {
+            try {
+                // Auto-submit form with location data
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{% url "index" %}';
+                
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = csrfToken;
+                
+                const cityInput = document.createElement('input');
+                cityInput.type = 'hidden';
+                cityInput.name = 'city';
+                cityInput.value = 'Current Location';
+                
+                const latInput = document.createElement('input');
+                latInput.type = 'hidden';
+                latInput.name = 'lat';
+                latInput.value = lat;
+                
+                const lonInput = document.createElement('input');
+                lonInput.type = 'hidden';
+                lonInput.name = 'lon';
+                lonInput.value = lon;
+                
+                form.appendChild(csrfInput);
+                form.appendChild(cityInput);
+                form.appendChild(latInput);
+                form.appendChild(lonInput);
+                
+                document.body.appendChild(form);
+                form.submit();
+            } catch (error) {
+                console.error('Error fetching weather by coordinates:', error);
+                document.getElementById('loading-indicator').style.display = 'none';
+            }
+        }
+        
+        // Initialize geolocation on page load
+        window.addEventListener('load', getDefaultLocation);
+        
+        // City autocomplete
         const cityInput = document.getElementById('city-input');
         const resultsContainer = document.getElementById('location-results');
         const selectedLat = document.getElementById('selected-lat');
         const selectedLon = document.getElementById('selected-lon');
         let typingTimer;
-        const doneTypingInterval = 500; // ms
+        const doneTypingInterval = 500;
         
         cityInput.addEventListener('input', function() {
             clearTimeout(typingTimer);
@@ -448,10 +831,119 @@
             resultsContainer.style.display = 'block';
         }
         
-        // Hide suggestions when clicking outside
+        // Hide suggestions on outside click
         document.addEventListener('click', function(event) {
             if (!event.target.closest('.autocomplete-container')) {
                 resultsContainer.style.display = 'none';
+            }
+        });
+        
+        // Temperature Unit Conversion
+        document.addEventListener('DOMContentLoaded', function() {
+            const tempDisplay = document.querySelector('.temp-display');
+            if (!tempDisplay) return;
+            
+            const originalTemp = tempDisplay.textContent;
+            const tempValue = parseFloat(originalTemp);
+            const unitButtons = document.querySelectorAll('.unit-toggle-btn');
+            
+            // Store original temp for conversions
+            tempDisplay.dataset.celsius = tempValue;
+            
+            unitButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Update active state
+                    unitButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const unit = this.dataset.unit;
+                    const celsius = parseFloat(tempDisplay.dataset.celsius);
+                    
+                    if (unit === 'imperial') {
+                        // C to F conversion
+                        const fahrenheit = (celsius * 9/5) + 32;
+                        tempDisplay.textContent = `${fahrenheit.toFixed(1)} °F`;
+                    } else {
+                        tempDisplay.textContent = `${celsius.toFixed(1)} °C`;
+                    }
+                    
+                    localStorage.setItem('temperatureUnit', unit);
+                });
+            });
+            
+            // Use saved preference or default to metric
+            const savedUnit = localStorage.getItem('temperatureUnit') || 'metric';
+            const unitToActivate = savedUnit === 'imperial' ? unitButtons[1] : unitButtons[0];
+            unitToActivate.click();
+        });
+        
+        // Weather Map initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            const weatherMapContainer = document.getElementById('weather-map');
+            if (!weatherMapContainer) return;
+            
+            // Get map data from container attributes
+            const coordinateData = weatherMapContainer.getAttribute('data-coordinates');
+            if (!coordinateData) return;
+            
+            try {
+                const coords = coordinateData.split(', ');
+                const lon = parseFloat(coords[0]);
+                const lat = parseFloat(coords[1]);
+                
+                if (isNaN(lon) || isNaN(lat)) return;
+                
+                // Initialize map with theme-appropriate tiles
+                const theme = localStorage.getItem('theme') || 'light';
+                const tileLayer = theme === 'dark' 
+                    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                    : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+                    
+                const map = L.map('weather-map').setView([lat, lon], 10);
+                
+                L.tileLayer(tileLayer, {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: 18
+                }).addTo(map);
+                
+                // Add weather marker with popup
+                const marker = L.marker([lat, lon]).addTo(map);
+                const cityName = weatherMapContainer.getAttribute('data-city');
+                const countryCode = weatherMapContainer.getAttribute('data-country');
+                const temp = weatherMapContainer.getAttribute('data-temp');
+                const main = weatherMapContainer.getAttribute('data-main');
+                const icon = weatherMapContainer.getAttribute('data-icon');
+                
+                marker.bindPopup(`
+                    <strong>${cityName}, ${countryCode}</strong><br>
+                    ${temp} | ${main}<br>
+                    <img src="http://openweathermap.org/img/w/${icon}.png" alt="Weather Icon" style="width:50px">
+                `).openPopup();
+                
+                // Update map tiles on theme change
+                document.querySelector('#checkbox').addEventListener('change', function() {
+                    const newTheme = this.checked ? 'dark' : 'light';
+                    const newTileLayer = newTheme === 'dark' 
+                        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                        : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+                    
+                    // Remove existing tile layer
+                    map.eachLayer(function(layer) {
+                        if (layer instanceof L.TileLayer) {
+                            map.removeLayer(layer);
+                        }
+                    });
+                    
+                    L.tileLayer(newTileLayer, {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                        maxZoom: 18
+                    }).addTo(map);
+                });
+            } catch (error) {
+                console.error('Error initializing map:', error);
+                if (weatherMapContainer) {
+                    weatherMapContainer.style.display = 'none';
+                }
             }
         });
     </script>
