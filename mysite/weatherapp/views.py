@@ -27,9 +27,8 @@ def index(request):
         lon = request.POST.get('lon')
         
         try:
-            # TODO: Replace '<API-KEY-GOES-HERE>' with your actual OpenWeatherMap API key
+            # Use coordinates for more accurate results if provided
             if lat and lon:
-                # Use coordinates for more accurate results if provided
                 url = f'http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid=6fcd6f7736ef7bf7c234dcb03a3e1df5'
             else:
                 # Fall back to city name search
@@ -73,6 +72,7 @@ def index(request):
             messages.error(request, "Invalid response from weather service")
         except Exception as e:
             messages.error(request, f"An unexpected error occurred: {str(e)}")
+            data = {'error': 'City not found or connection error'}
 
     return render(request, "main/index.html", data)
 
@@ -121,8 +121,7 @@ def location_suggestions(request):
     
     try:
         # Use OpenWeatherMap Geocoding API to get suggestions
-        # TODO: Replace '<API-KEY-GOES-HERE>' with your actual OpenWeatherMap API key
-        url = f'http://api.openweathermap.org/geo/1.0/direct?q={query}&limit=5&appid=<API-KEY-GOES-HERE>'
+        url = f'http://api.openweathermap.org/geo/1.0/direct?q={query}&limit=5&appid=6fcd6f7736ef7bf7c234dcb03a3e1df5'
         source = urllib.request.urlopen(url).read()
         locations = json.loads(source)
         
